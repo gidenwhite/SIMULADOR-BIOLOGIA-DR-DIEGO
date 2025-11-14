@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Examen de Biología</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #e0f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            width: 95%;
+            max-width: 900px;
+            padding: 25px 30px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #00796b;
+        }
+        input, button {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 1px solid #b2dfdb;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        input:focus {
+            outline: none;
+            border-color: #00796b;
+        }
+        button {
+            background-color: #00796b;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        button:hover {
+            background-color: #004d40;
+        }
+        .question-container { margin-top: 20px; }
+        .options label {
+            display: block;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #b2dfdb;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .options input[type="radio"] { margin-right: 10px; }
+        .options label:hover { background-color: #b2dfdb33; }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .navigation button { width: 48%; }
+        .timer {
+            text-align: center;
+            font-size: 1.4em;
+            margin-top: 10px;
+            font-weight: bold;
+            color: #d32f2f;
+        }
+        #finalizarBtn { background-color: #d32f2f; }
+        #finalizarBtn:hover { background-color: #9a0007; }
+        @media(max-width:600px){ .navigation button { width: 100%; } }
+    </style>
+</head>
+<body>
+<div class="container" id="app">
+    <div id="formulario">
+        <h1>Simulador Examen de Biología</h1>
+        <input type="text" id="nombre" placeholder="Nombre completo" required>
+        <input type="tel" id="celular" placeholder="Celular" required pattern="[0-9]{6,15}" title="Ingrese un número válido">
+        <input type="text" id="carrera" placeholder="Carrera" required>
+        <button id="iniciar">Iniciar Examen</button>
+    </div>
+
+    <div id="examen" style="display:none;">
+        <div class="timer" id="timer">Tiempo: 40:00</div>
+        <div class="question-container">
+            <h2 id="pregunta-texto"></h2>
+            <div class="options" id="opciones"></div>
+        </div>
+        <div class="navigation">
+            <button id="prevBtn">Anterior</button>
+            <button id="nextBtn">Siguiente</button>
+            <button id="finalizarBtn">Finalizar Prueba</button>
+        </div>
+    </div>
+
+    <div id="resultado" style="display:none;">
+        <h1>Resultado del Examen</h1>
+        <p id="puntaje"></p>
+        <p id="estado"></p>
+    </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA2dDTanG2_P-loZfrk8SNERTh90Jh26IY",
+    authDomain: "simuladorbiologia-53696.firebaseapp.com",
+    projectId: "simuladorbiologia-53696",
+    storageBucket: "simuladorbiologia-53696.firebasestorage.app",
+    messagingSenderId: "184750071858",
+    appId: "1:184750071858:web:605331dd46e3119cd81c2b"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+let preguntas=[], seleccionadas=[], respuestasUsuario=[];
+let tiempo = 40*60, timerInterval, indexPregunta=0;
+const formulario = document.getElementById('formulario');
+const examen = document.getElementById('examen');
+const resultado = document.getElementById('resultado');
+const timerDisplay = document.getElementById('timer');
+const preguntaTexto = document.getElementById('pregunta-texto');
+const opcionesDiv = document.getElementById('opciones');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const finalizarBtn = document.getElementById('finalizarBtn');
+
+async function cargarPreguntas(){
+    const response = await fetch('preguntas.csv');
+    const data = await response.text();
+    const filas = data.split('\n');
+    filas.forEach(fila=>{
+        const cols = fila.split(';');
+        if(cols.length===7){
+            preguntas.push({id:cols[0], pregunta:cols[1], opciones:[cols[2],cols[3],cols[4],cols[5]], respuesta:cols[6].trim().toUpperCase()});
+        }
+    });
+}
+
+function seleccionarPreguntas(){
+    let temp = [...preguntas];
+    seleccionadas=[];
+    respuestasUsuario=[];
+    for(let i=0;i<40 && temp.length>0;i++){
+        const idx = Math.floor(Math.random()*temp.length);
+        seleccionadas.push(temp[idx]);
+        temp.splice(idx,1);
+        respuestasUsuario.push(null);
+    }
+}
+
+function mostrarPregunta(){
+    const q = seleccionadas[indexPregunta];
+    preguntaTexto.textContent = `Pregunta ${indexPregunta+1}: ${q.pregunta}`;
+    opcionesDiv.innerHTML='';
+    ['A','B','C','D'].forEach((letra,i)=>{
+        const label=document.createElement('label');
+        const radio=document.createElement('input');
+        radio.type='radio'; radio.name='opcion'; radio.value=letra;
+        if(respuestasUsuario[indexPregunta]===letra) radio.checked=true;
+        label.appendChild(radio);
+        label.append(` ${letra}: ${q.opciones[i]}`);
+        opcionesDiv.appendChild(label);
+    });
+    prevBtn.style.display = indexPregunta===0?'none':'inline-block';
+}
+
+function guardarRespuesta(){
+    const radios=document.getElementsByName('opcion');
+    radios.forEach(r=>{if(r.checked) respuestasUsuario[indexPregunta]=r.value});
+}
+
+function calcularResultado(){
+    guardarRespuesta();
+    let puntaje=0;
+    seleccionadas.forEach((q,i)=>{ if(respuestasUsuario[i]===q.respuesta) puntaje+=2.5; });
+    let estado='No Aprobado';
+    if(puntaje>81) estado='Admitido';
+    else if(puntaje>51) estado='Aprobado';
+
+    document.getElementById('puntaje').textContent=`Puntaje: ${puntaje.toFixed(2)}/100`;
+    document.getElementById('estado').textContent=`Estado: ${estado}`;
+
+    examen.style.display='none';
+    resultado.style.display='block';
+    clearInterval(timerInterval);
+
+    // ===== Guardar en Firebase =====
+    const nombre = document.getElementById('nombre').value.trim();
+    const celular = document.getElementById('celular').value.trim();
+    const carrera = document.getElementById('carrera').value.trim();
+    const fechaFin = new Date().toISOString();
+
+    db.collection("resultados").add({
+        nombre,
+        celular,
+        carrera,
+        puntaje: puntaje.toFixed(2),
+        estado,
+        fechaFin
+    })
+    .then(()=>console.log("Datos guardados en Firebase!"))
+    .catch(error=>console.error("Error guardando en Firebase: ", error));
+}
+
+function iniciarTimer(){
+    timerInterval=setInterval(()=>{
+        if(tiempo<=0){ calcularResultado(); }
+        else{
+            let min=Math.floor(tiempo/60);
+            let seg=tiempo%60;
+            timerDisplay.textContent=`Tiempo: ${min.toString().padStart(2,'0')}:${seg.toString().padStart(2,'0')}`;
+            tiempo--;
+        }
+    },1000);
+}
+
+document.getElementById('iniciar').addEventListener('click', async ()=>{
+    const nombre=document.getElementById('nombre').value.trim();
+    const celular=document.getElementById('celular').value.trim();
+    const carrera=document.getElementById('carrera').value.trim();
+    if(nombre===''||celular===''||carrera===''){ alert('Complete todos los campos'); return; }
+    formulario.style.display='none';
+    examen.style.display='block';
+    await cargarPreguntas();
+    seleccionarPreguntas();
+    mostrarPregunta();
+    iniciarTimer();
+});
+
+nextBtn.addEventListener('click', ()=>{
+    guardarRespuesta();
+    if(indexPregunta<seleccionadas.length-1){
+        indexPregunta++;
+        mostrarPregunta();
+    } else {
+        alert('Has llegado al final del examen. Pulsa "Finalizar Prueba" para calcular tu resultado.');
+    }
+});
+
+prevBtn.addEventListener('click', ()=>{
+    guardarRespuesta();
+    if(indexPregunta>0){
+        indexPregunta--;
+        mostrarPregunta();
+    }
+});
+
+finalizarBtn.addEventListener('click', ()=>{
+    if(confirm('¿Deseas finalizar el examen y calcular tu resultado?')){
+        calcularResultado();
+    }
+});
+</script>
+</body>
+</html>
