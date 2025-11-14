@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultados del Examen de Biología</title>
+<style>
+    body { font-family: Arial, sans-serif; background: #e0f7fa; padding: 20px; }
+    h1 { text-align: center; color: #00796b; }
+    input, select { padding: 8px; margin: 10px 0; width: 100%; max-width: 300px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #00796b; padding: 10px; text-align: center; }
+    th { background-color: #00796b; color: white; cursor: pointer; }
+    tr:nth-child(even){ background-color: #b2dfdb33; }
+</style>
+</head>
+<body>
+
+<h1>Resultados del Examen de Biología</h1>
+
+<!-- Filtro por carrera -->
+<select id="filtroCarrera">
+    <option value="">Todas las carreras</option>
+</select>
+
+<table>
+    <thead>
+        <tr>
+            <th onclick="ordenarTabla(0)">Nombre</th>
+            <th>Celular</th>
+            <th onclick="ordenarTabla(2)">Carrera</th>
+            <th onclick="ordenarTabla(3)">Puntaje</th>
+            <th>Estado</th>
+            <th onclick="ordenarTabla(5)">Fecha</th>
+        </tr>
+    </thead>
+    <tbody id="tabla-resultados">
+        <!-- Datos se llenarán con Firebase -->
+    </tbody>
+</table>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA2dDTanG2_P-loZfrk8SNERTh90Jh26IY",
+    authDomain: "simuladorbiologia-53696.firebaseapp.com",
+    projectId: "simuladorbiologia-53696",
+    storageBucket: "simuladorbiologia-53696.firebasestorage.app",
+    messagingSenderId: "184750071858",
+    appId: "1:184750071858:web:605331dd46e3119cd81c2b"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
+
+<script>
+const tabla = document.getElementById('tabla-resultados');
+const filtro = document.getElementById('filtroCarrera');
+let resultados = [];
+
+// Función para mostrar los datos en la tabla
+function mostrarResultados(data){
+    tabla.innerHTML='';
+    let carrerasSet = new Set();
+    data.forEach(item=>{
+        carrerasSet.add(item.carrera);
+        const fila = document.createElement('tr');
+        fila.innerHTML = `
+            <td>${item.nombre}</td>
+            <td>${item.celular}</td>
+            <td>${item.carrera}</td>
+            <td>${item.puntaje}</td>
+            <td>${item.estado}</td>
+            <td>${new Date(item.fechaFin).toLocaleString()}</td>
+        `;
+        tabla.appendChild(fila);
+    });
+
+    // Llenar el select de filtro solo con carreras existentes
+    filtro.innerHTML = '<option value="">Todas las carreras</option>';
+    carrerasSet.forEach(c=>{ filtro.innerHTML += `<option value="${c}">${c}</option>` });
+}
+
+// Traer los datos desde Firebase
+db.collection("resultados").get().then((querySnapshot)=>{
+    resultados=[];
+    querySnapshot.forEach(doc=>{
+        resultados.push(doc.data());
+    });
+    mostrarResultados(resultados);
+}).catch(err=>console.error("Error al cargar resultados: ", err));
+
+// Filtrar por carrera
+filtro.addEventListener('change', ()=>{
+    const valor = filtro.value;
+    if(valor==='') mostrarResultados(resultados);
+    else mostrarResultados(resultados.filter(r=>r.carrera===valor));
+});
+
+// Función para ordenar la tabla
+function ordenarTabla(colIndex){
+    let filas = Array.from(tabla.querySelectorAll('tr'));
+    const asc = tabla.getAttribute('data-sort') !== 'asc';
+    filas.sort((a,b)=>{
+        let aText = a.children[colIndex].textContent;
+        let bText = b.children[colIndex].textContent;
+        if(colIndex===3) { aText=parseFloat(aText); bText=parseFloat(bText); } // Puntaje
+        if(colIndex===5) { aText=new Date(aText); bText=new Date(bText); } // Fecha
+        return asc ? (aText>bText?1:-1) : (aText<bText?1:-1);
+    });
+    tabla.innerHTML='';
+    filas.forEach(f=>tabla.appendChild(f));
+    tabla.setAttribute('data-sort', asc?'asc':'desc');
+}
+</script>
+
+</body>
+</html>
