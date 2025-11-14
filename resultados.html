@@ -5,39 +5,441 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Resultados del Examen de Biología</title>
 <style>
-    body { font-family: Arial, sans-serif; background: #e0f7fa; padding: 20px; }
-    h1 { text-align: center; color: #00796b; }
-    input, select { padding: 8px; margin: 10px 0; width: 100%; max-width: 300px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #00796b; padding: 10px; text-align: center; }
-    th { background-color: #00796b; color: white; cursor: pointer; }
-    tr:nth-child(even){ background-color: #b2dfdb33; }
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+    
+    .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        animation: fadeIn 0.6s ease-in;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    header {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        margin-bottom: 25px;
+        text-align: center;
+    }
+    
+    h1 {
+        color: #667eea;
+        font-size: 2.2em;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+    }
+    
+    .stat-icon {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+    }
+    
+    .stat-number {
+        font-size: 2em;
+        font-weight: bold;
+        color: #667eea;
+        margin: 10px 0;
+    }
+    
+    .stat-label {
+        color: #666;
+        font-size: 0.95em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .controls {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        margin-bottom: 25px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .search-box {
+        flex: 1;
+        min-width: 250px;
+        position: relative;
+    }
+    
+    .search-box input {
+        width: 100%;
+        padding: 12px 45px 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1em;
+        transition: all 0.3s ease;
+    }
+    
+    .search-box input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .search-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #999;
+        font-size: 1.2em;
+    }
+    
+    .filter-group {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    select {
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        font-size: 1em;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 180px;
+    }
+    
+    select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .btn {
+        padding: 12px 25px;
+        border: none;
+        border-radius: 10px;
+        font-size: 1em;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-export {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(17, 153, 142, 0.3);
+    }
+    
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        overflow: hidden;
+    }
+    
+    .table-wrapper {
+        overflow-x: auto;
+    }
+    
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    th {
+        padding: 18px 15px;
+        text-align: left;
+        font-weight: 600;
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+        white-space: nowrap;
+        transition: background 0.3s ease;
+    }
+    
+    th:hover {
+        background: rgba(255,255,255,0.1);
+    }
+    
+    th.sortable::after {
+        content: '⇅';
+        position: absolute;
+        right: 8px;
+        opacity: 0.5;
+        font-size: 0.9em;
+    }
+    
+    th.sort-asc::after {
+        content: '▲';
+        opacity: 1;
+    }
+    
+    th.sort-desc::after {
+        content: '▼';
+        opacity: 1;
+    }
+    
+    td {
+        padding: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    
+    tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    tbody tr:hover {
+        background: #f5f7ff;
+        transform: scale(1.01);
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .badge-admitido {
+        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+        color: white;
+    }
+    
+    .badge-aprobado {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .badge-no-aprobado {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .puntaje {
+        font-weight: bold;
+        font-size: 1.1em;
+        color: #667eea;
+    }
+    
+    .loading {
+        text-align: center;
+        padding: 50px;
+        color: #666;
+        font-size: 1.2em;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 50px;
+        color: #999;
+        font-size: 1.1em;
+    }
+    
+    @media (max-width: 768px) {
+        h1 {
+            font-size: 1.5em;
+        }
+        
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .controls {
+            flex-direction: column;
+        }
+        
+        .search-box,
+        select,
+        .btn {
+            width: 100%;
+        }
+        
+        table {
+            font-size: 0.9em;
+        }
+        
+        th, td {
+            padding: 10px 8px;
+        }
+        
+        .stat-card {
+            padding: 15px;
+        }
+        
+        .stat-icon {
+            font-size: 2em;
+        }
+        
+        .stat-number {
+            font-size: 1.5em;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        
+        body {
+            padding: 10px;
+        }
+        
+        header {
+            padding: 20px 15px;
+        }
+    }
+    
+    /* Animación para nuevas filas */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    tbody tr {
+        animation: slideIn 0.4s ease-out;
+    }
 </style>
 </head>
 <body>
 
-<h1>Resultados del Examen de Biología</h1>
+<div class="container">
+    <header>
+        <h1>
+            <span>🧬</span>
+            <span>Panel de Resultados</span>
+            <span>📊</span>
+        </h1>
+        <p style="color: #666; margin-top: 10px;">Examen de Biología - Gestión de Calificaciones</p>
+    </header>
 
-<!-- Filtro por carrera -->
-<select id="filtroCarrera">
-    <option value="">Todas las carreras</option>
-</select>
+    <!-- Estadísticas -->
+    <div class="stats-container" id="stats">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-number" id="totalEstudiantes">0</div>
+            <div class="stat-label">Total Estudiantes</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🎉</div>
+            <div class="stat-number" id="totalAdmitidos">0</div>
+            <div class="stat-label">Admitidos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-number" id="totalAprobados">0</div>
+            <div class="stat-label">Aprobados</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📈</div>
+            <div class="stat-number" id="promedioGeneral">0</div>
+            <div class="stat-label">Promedio General</div>
+        </div>
+    </div>
 
-<table>
-    <thead>
-        <tr>
-            <th onclick="ordenarTabla(0)">Nombre</th>
-            <th>Celular</th>
-            <th onclick="ordenarTabla(2)">Carrera</th>
-            <th onclick="ordenarTabla(3)">Puntaje</th>
-            <th>Estado</th>
-            <th onclick="ordenarTabla(5)">Fecha</th>
-        </tr>
-    </thead>
-    <tbody id="tabla-resultados">
-        <!-- Datos se llenarán con Firebase -->
-    </tbody>
-</table>
+    <!-- Controles -->
+    <div class="controls">
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="Buscar por nombre o celular...">
+            <span class="search-icon">🔍</span>
+        </div>
+        
+        <div class="filter-group">
+            <select id="filtroCarrera">
+                <option value="">Todas las carreras</option>
+            </select>
+            
+            <select id="filtroEstado">
+                <option value="">Todos los estados</option>
+                <option value="Admitido">Admitido</option>
+                <option value="Aprobado">Aprobado</option>
+                <option value="No Aprobado">No Aprobado</option>
+            </select>
+            
+            <button class="btn btn-export" onclick="exportarDatos()">
+                📥 Exportar CSV
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="table-container">
+        <div class="table-wrapper">
+            <table id="mainTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="ordenarTabla(0)">Nombre</th>
+                        <th>Celular</th>
+                        <th class="sortable" onclick="ordenarTabla(2)">Carrera</th>
+                        <th class="sortable" onclick="ordenarTabla(3)">Puntaje</th>
+                        <th>Estado</th>
+                        <th class="sortable" onclick="ordenarTabla(5)">Fecha</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-resultados">
+                    <tr><td colspan="6" class="loading">⏳ Cargando resultados...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -57,62 +459,200 @@
 
 <script>
 const tabla = document.getElementById('tabla-resultados');
-const filtro = document.getElementById('filtroCarrera');
+const filtroCarrera = document.getElementById('filtroCarrera');
+const filtroEstado = document.getElementById('filtroEstado');
+const searchInput = document.getElementById('searchInput');
 let resultados = [];
+let resultadosFiltrados = [];
+let sortColumn = -1;
+let sortAsc = true;
+
+// Función para calcular estadísticas
+function actualizarEstadisticas(data) {
+    const total = data.length;
+    const admitidos = data.filter(r => r.estado === 'Admitido').length;
+    const aprobados = data.filter(r => r.estado === 'Aprobado').length;
+    const promedio = total > 0 ? (data.reduce((sum, r) => sum + parseFloat(r.puntaje), 0) / total).toFixed(1) : 0;
+    
+    document.getElementById('totalEstudiantes').textContent = total;
+    document.getElementById('totalAdmitidos').textContent = admitidos;
+    document.getElementById('totalAprobados').textContent = aprobados;
+    document.getElementById('promedioGeneral').textContent = promedio;
+}
 
 // Función para mostrar los datos en la tabla
-function mostrarResultados(data){
-    tabla.innerHTML='';
+function mostrarResultados(data) {
+    if (data.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="6" class="no-results">😔 No se encontraron resultados</td></tr>';
+        return;
+    }
+    
+    tabla.innerHTML = '';
     let carrerasSet = new Set();
-    data.forEach(item=>{
+    
+    data.forEach((item, index) => {
         carrerasSet.add(item.carrera);
         const fila = document.createElement('tr');
+        fila.style.animationDelay = `${index * 0.05}s`;
+        
+        let badgeClass = 'badge-no-aprobado';
+        if (item.estado === 'Admitido') badgeClass = 'badge-admitido';
+        else if (item.estado === 'Aprobado') badgeClass = 'badge-aprobado';
+        
         fila.innerHTML = `
-            <td>${item.nombre}</td>
+            <td><strong>${item.nombre}</strong></td>
             <td>${item.celular}</td>
             <td>${item.carrera}</td>
-            <td>${item.puntaje}</td>
-            <td>${item.estado}</td>
-            <td>${new Date(item.fechaFin).toLocaleString()}</td>
+            <td><span class="puntaje">${item.puntaje}</span></td>
+            <td><span class="badge ${badgeClass}">${item.estado}</span></td>
+            <td>${new Date(item.fechaFin).toLocaleString('es-ES', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })}</td>
         `;
         tabla.appendChild(fila);
     });
 
     // Llenar el select de filtro solo con carreras existentes
-    filtro.innerHTML = '<option value="">Todas las carreras</option>';
-    carrerasSet.forEach(c=>{ filtro.innerHTML += `<option value="${c}">${c}</option>` });
+    if (filtroCarrera.options.length === 1) {
+        carrerasSet.forEach(c => {
+            const option = document.createElement('option');
+            option.value = c;
+            option.textContent = c;
+            filtroCarrera.appendChild(option);
+        });
+    }
+}
+
+// Aplicar todos los filtros
+function aplicarFiltros() {
+    let filtered = [...resultados];
+    
+    // Filtro por carrera
+    const carreraSeleccionada = filtroCarrera.value;
+    if (carreraSeleccionada) {
+        filtered = filtered.filter(r => r.carrera === carreraSeleccionada);
+    }
+    
+    // Filtro por estado
+    const estadoSeleccionado = filtroEstado.value;
+    if (estadoSeleccionado) {
+        filtered = filtered.filter(r => r.estado === estadoSeleccionado);
+    }
+    
+    // Filtro por búsqueda
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    if (searchTerm) {
+        filtered = filtered.filter(r => 
+            r.nombre.toLowerCase().includes(searchTerm) ||
+            r.celular.includes(searchTerm)
+        );
+    }
+    
+    resultadosFiltrados = filtered;
+    actualizarEstadisticas(filtered);
+    mostrarResultados(filtered);
 }
 
 // Traer los datos desde Firebase
-db.collection("resultados").get().then((querySnapshot)=>{
-    resultados=[];
-    querySnapshot.forEach(doc=>{
+db.collection("resultados").onSnapshot((querySnapshot) => {
+    resultados = [];
+    querySnapshot.forEach(doc => {
         resultados.push(doc.data());
     });
-    mostrarResultados(resultados);
-}).catch(err=>console.error("Error al cargar resultados: ", err));
-
-// Filtrar por carrera
-filtro.addEventListener('change', ()=>{
-    const valor = filtro.value;
-    if(valor==='') mostrarResultados(resultados);
-    else mostrarResultados(resultados.filter(r=>r.carrera===valor));
+    
+    // Ordenar por fecha descendente por defecto
+    resultados.sort((a, b) => new Date(b.fechaFin) - new Date(a.fechaFin));
+    
+    aplicarFiltros();
+}, err => {
+    console.error("Error al cargar resultados: ", err);
+    tabla.innerHTML = '<tr><td colspan="6" class="no-results">❌ Error al cargar los datos</td></tr>';
 });
 
+// Event listeners para filtros
+filtroCarrera.addEventListener('change', aplicarFiltros);
+filtroEstado.addEventListener('change', aplicarFiltros);
+searchInput.addEventListener('input', aplicarFiltros);
+
 // Función para ordenar la tabla
-function ordenarTabla(colIndex){
-    let filas = Array.from(tabla.querySelectorAll('tr'));
-    const asc = tabla.getAttribute('data-sort') !== 'asc';
-    filas.sort((a,b)=>{
-        let aText = a.children[colIndex].textContent;
-        let bText = b.children[colIndex].textContent;
-        if(colIndex===3) { aText=parseFloat(aText); bText=parseFloat(bText); } // Puntaje
-        if(colIndex===5) { aText=new Date(aText); bText=new Date(bText); } // Fecha
-        return asc ? (aText>bText?1:-1) : (aText<bText?1:-1);
+function ordenarTabla(colIndex) {
+    const headers = document.querySelectorAll('th.sortable');
+    
+    if (sortColumn === colIndex) {
+        sortAsc = !sortAsc;
+    } else {
+        sortColumn = colIndex;
+        sortAsc = true;
+    }
+    
+    // Actualizar estilos de headers
+    headers.forEach((h, i) => {
+        h.classList.remove('sort-asc', 'sort-desc');
+        if (i === colIndex) {
+            h.classList.add(sortAsc ? 'sort-asc' : 'sort-desc');
+        }
     });
-    tabla.innerHTML='';
-    filas.forEach(f=>tabla.appendChild(f));
-    tabla.setAttribute('data-sort', asc?'asc':'desc');
+    
+    resultadosFiltrados.sort((a, b) => {
+        let aVal, bVal;
+        
+        switch(colIndex) {
+            case 0: // Nombre
+                aVal = a.nombre.toLowerCase();
+                bVal = b.nombre.toLowerCase();
+                break;
+            case 2: // Carrera
+                aVal = a.carrera.toLowerCase();
+                bVal = b.carrera.toLowerCase();
+                break;
+            case 3: // Puntaje
+                aVal = parseFloat(a.puntaje);
+                bVal = parseFloat(b.puntaje);
+                break;
+            case 5: // Fecha
+                aVal = new Date(a.fechaFin);
+                bVal = new Date(b.fechaFin);
+                break;
+            default:
+                return 0;
+        }
+        
+        if (aVal < bVal) return sortAsc ? -1 : 1;
+        if (aVal > bVal) return sortAsc ? 1 : -1;
+        return 0;
+    });
+    
+    mostrarResultados(resultadosFiltrados);
+}
+
+// Función para exportar a CSV
+function exportarDatos() {
+    if (resultadosFiltrados.length === 0) {
+        alert('No hay datos para exportar');
+        return;
+    }
+    
+    let csv = 'Nombre,Celular,Carrera,Puntaje,Estado,Fecha\n';
+    
+    resultadosFiltrados.forEach(item => {
+        csv += `"${item.nombre}","${item.celular}","${item.carrera}",${item.puntaje},"${item.estado}","${new Date(item.fechaFin).toLocaleString()}"\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `resultados_biologia_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 </script>
 
